@@ -55,9 +55,18 @@ namespace TestSite
                 options.AccessDeniedPath = "/account/accessdenied";
                 options.SlidingExpiration = true;
             });
+            
+            //authorization policy setup
+            services.AddAuthorization(x =>
+            {
+                x.AddPolicy("AdminArea", policy => { policy.RequireRole("admin"); });
+            });
 
             //adding mvc support
-            services.AddControllersWithViews()
+            services.AddControllersWithViews( x =>
+            {
+                x.Conventions.Add(new AdminAreaAuthorization("Admin", "AdminArea"));
+            })
                 
             
             .SetCompatibilityVersion(CompatibilityVersion.Version_3_0).AddSessionStateTempDataProvider();
@@ -67,9 +76,8 @@ namespace TestSite
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
-            {
                 app.UseDeveloperExceptionPage();
-            }
+
 
             app.UseStaticFiles();
 
@@ -81,8 +89,9 @@ namespace TestSite
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapControllerRoute("Admin", "{area:exists}/{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
-                                
+
             });
         }
     }
